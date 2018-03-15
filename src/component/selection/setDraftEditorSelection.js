@@ -30,10 +30,7 @@ function getAnonymizedDOM(node: Node): string {
     return anonymized.textContent;
   }
 
-  invariant(
-    anonymized instanceof Element,
-    'Node must be an Element if it is not a text node.',
-  );
+  invariant(anonymized instanceof Element, 'Node must be an Element if it is not a text node.');
   return anonymized.innerHTML;
 }
 
@@ -56,10 +53,7 @@ function getAnonymizedEditorDOM(node: Node): string {
   // grabbing the DOM content of the Draft editor
   let currentNode = node;
   while (currentNode) {
-    if (
-      currentNode instanceof Element
-      && currentNode.hasAttribute('contenteditable')
-    ) {
+    if (currentNode instanceof Element && currentNode.hasAttribute('contenteditable')) {
       // found the Draft editor container
       return getAnonymizedDOM(currentNode);
     } else {
@@ -70,9 +64,7 @@ function getAnonymizedEditorDOM(node: Node): string {
 }
 
 function getNodeLength(node: Node): number {
-  return node.nodeValue === null
-    ? node.childNodes.length
-    : node.nodeValue.length;
+  return node.nodeValue === null ? node.childNodes.length : node.nodeValue.length;
 }
 
 /**
@@ -89,7 +81,7 @@ function setDraftEditorSelection(
   node: Node,
   blockKey: string,
   nodeStart: number,
-  nodeEnd: number,
+  nodeEnd: number
 ): void {
   // It's possible that the editor has been removed from the DOM but
   // our selection code doesn't know it yet. Forcing selection in
@@ -116,34 +108,16 @@ function setDraftEditorSelection(
     isBackward = false;
   }
 
-  var hasAnchor = (
-    anchorKey === blockKey &&
-    nodeStart <= anchorOffset &&
-    nodeEnd >= anchorOffset
-  );
+  var hasAnchor = anchorKey === blockKey && nodeStart <= anchorOffset && nodeEnd >= anchorOffset;
 
-  var hasFocus = (
-    focusKey === blockKey &&
-    nodeStart <= focusOffset &&
-    nodeEnd >= focusOffset
-  );
+  var hasFocus = focusKey === blockKey && nodeStart <= focusOffset && nodeEnd >= focusOffset;
 
   // If the selection is entirely bound within this node, set the selection
   // and be done.
   if (hasAnchor && hasFocus) {
     selection.removeAllRanges();
-    addPointToSelection(
-      selection,
-      node,
-      anchorOffset - nodeStart,
-      selectionState,
-    );
-    addFocusToSelection(
-      selection,
-      node,
-      focusOffset - nodeStart,
-      selectionState,
-    );
+    addPointToSelection(selection, node, anchorOffset - nodeStart, selectionState);
+    addFocusToSelection(selection, node, focusOffset - nodeStart, selectionState);
     return;
   }
 
@@ -151,24 +125,14 @@ function setDraftEditorSelection(
     // If the anchor is within this node, set the range start.
     if (hasAnchor) {
       selection.removeAllRanges();
-      addPointToSelection(
-        selection,
-        node,
-        anchorOffset - nodeStart,
-        selectionState,
-      );
+      addPointToSelection(selection, node, anchorOffset - nodeStart, selectionState);
     }
 
     // If the focus is within this node, we can assume that we have
     // already set the appropriate start range on the selection, and
     // can simply extend the selection.
     if (hasFocus) {
-      addFocusToSelection(
-        selection,
-        node,
-        focusOffset - nodeStart,
-        selectionState,
-      );
+      addFocusToSelection(selection, node, focusOffset - nodeStart, selectionState);
     }
   } else {
     // If this node has the focus, set the selection range to be a
@@ -176,12 +140,7 @@ function setDraftEditorSelection(
     // we'll use this information to extend the selection.
     if (hasFocus) {
       selection.removeAllRanges();
-      addPointToSelection(
-        selection,
-        node,
-        focusOffset - nodeStart,
-        selectionState,
-      );
+      addPointToSelection(selection, node, focusOffset - nodeStart, selectionState);
     }
 
     // If this node has the anchor, we may assume that the correct
@@ -193,18 +152,8 @@ function setDraftEditorSelection(
       var storedFocusOffset = selection.focusOffset;
 
       selection.removeAllRanges();
-      addPointToSelection(
-        selection,
-        node,
-        anchorOffset - nodeStart,
-        selectionState,
-      );
-      addFocusToSelection(
-        selection,
-        storedFocusNode,
-        storedFocusOffset,
-        selectionState,
-      );
+      addPointToSelection(selection, node, anchorOffset - nodeStart, selectionState);
+      addFocusToSelection(selection, storedFocusNode, storedFocusOffset, selectionState);
     }
   }
 }
@@ -216,7 +165,7 @@ function addFocusToSelection(
   selection: Object,
   node: Node,
   offset: number,
-  selectionState: SelectionState,
+  selectionState: SelectionState
 ): void {
   if (selection.extend && containsNode(getActiveElement(), node)) {
     // If `extend` is called while another element has focus, an error is
@@ -230,12 +179,14 @@ function addFocusToSelection(
       // the call to 'selection.extend' is about to throw
       DraftJsDebugLogging.logSelectionStateFailure({
         anonymizedDom: getAnonymizedEditorDOM(node),
-        extraParams: JSON.stringify({offset: offset}),
+        extraParams: JSON.stringify({ offset: offset }),
         selectionState: JSON.stringify(selectionState.toJS()),
       });
     }
     selection.extend(node, offset);
-  } else {
+  } else if (selection && selection.rangeCount > 0) {
+    // Check if range is not empty to prevent getting IndexSizeError in IE11
+
     // IE doesn't support extend. This will mean no backward selection.
     // Extract the existing selection range and add focus to it.
     // Additionally, clone the selection range. IE11 throws an
@@ -251,7 +202,7 @@ function addPointToSelection(
   selection: Object,
   node: Node,
   offset: number,
-  selectionState: SelectionState,
+  selectionState: SelectionState
 ): void {
   var range = document.createRange();
   // logging to catch bug that is being reported in t16250795
@@ -259,7 +210,7 @@ function addPointToSelection(
     // in this case we know that the call to 'range.setStart' is about to throw
     DraftJsDebugLogging.logSelectionStateFailure({
       anonymizedDom: getAnonymizedEditorDOM(node),
-      extraParams: JSON.stringify({offset: offset}),
+      extraParams: JSON.stringify({ offset: offset }),
       selectionState: JSON.stringify(selectionState.toJS()),
     });
   }
